@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Canvas, FabricImage, Line, FabricText, Rect } from 'fabric';
 import { useCanvasStore } from '../../store/canvasStore';
+import { optimizeImage, fileToDataURL } from '../../utils/imageUtils';
 
 const CanvasEditor = () => {
     const canvasRef = useRef(null);
@@ -8,6 +9,7 @@ const CanvasEditor = () => {
     const containerRef = useRef(null);
     const { slideCount, slideWidth, slideHeight, canvasWidth, canvasHeight, images, updateImage, setSelectedImageId, addImage, setSlideDimensions } = useCanvasStore();
     const [isResizing, setIsResizing] = useState(false);
+    const [isProcessingDrop, setIsProcessingDrop] = useState(false);
     const startPosRef = useRef({ x: 0, y: 0, w: 0, h: 0, ratio: 1 });
     const currentSizeRef = useRef({ w: 0, h: 0 });
     const requestRef = useRef();
@@ -69,7 +71,6 @@ const CanvasEditor = () => {
     useEffect(() => {
         if (!fabricRef.current) return;
         const canvas = fabricRef.current;
-        const currentObjects = canvas.getObjects('fabric.Image'); // In Fabric 6 it might be different, let's use type filter
 
         const syncImages = async () => {
             const imageObjects = canvas.getObjects().filter(obj => obj.id && !obj.name?.startsWith('template'));
@@ -119,7 +120,7 @@ const CanvasEditor = () => {
         syncImages();
     }, [images]);
 
-    const drawTemplate = (canvas) => {
+    const drawTemplate = useCallback((canvas) => {
         // Remove existing template elements
         const templateObjs = canvas.getObjects().filter(obj => obj.name && obj.name.startsWith('template'));
         templateObjs.forEach(obj => canvas.remove(obj));
@@ -158,7 +159,7 @@ const CanvasEditor = () => {
             canvas.sendObjectToBack(text);
         }
         canvas.renderAll();
-    };
+    }, [slideCount, slideWidth, slideHeight]);
 
     const handleDragOver = (e) => {
         e.preventDefault();
@@ -222,7 +223,7 @@ const CanvasEditor = () => {
             // 4. Update template
             drawTemplate(canvas);
         });
-    }, [isResizing, slideCount, slideWidth, slideHeight, images]);
+    }, [isResizing, slideCount, slideWidth, slideHeight, images, drawTemplate]);
 
     const handleResizeEnd = useCallback(() => {
         if (isResizing && currentSizeRef.current.w > 0) {
@@ -232,7 +233,7 @@ const CanvasEditor = () => {
         if (requestRef.current) {
             cancelAnimationFrame(requestRef.current);
         }
-    }, [isResizing, setSlideDimensions, slideWidth, slideHeight]);
+    }, [isResizing, setSlideDimensions]);
 
     useEffect(() => {
         if (isResizing) {
@@ -248,51 +249,61 @@ const CanvasEditor = () => {
         };
     }, [isResizing, handleResizeMove, handleResizeEnd]);
 
-    const handleDrop = (e) => {
+    const handleDrop = async (e) => {
         e.preventDefault();
         e.stopPropagation();
 
         const files = Array.from(e.dataTransfer.files);
-        files.forEach((file) => {
+        if (files.length === 0) return;
+
+        setIsProcessingDrop(true);
+
+        for (const file of files) {
             if (file.type.startsWith('image/')) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
+                try {
+                    // 1. Optimize
+                    const { compressedFile } = await optimizeImage(file);
+                    const dataUrl = await fileToDataURL(compressedFile);
+
+                    // 2. Process for Canvas
                     const img = new Image();
-                    img.onload = () => {
-                        const scaleX = slideWidth / img.width;
-                        const scaleY = slideHeight / img.height;
-                        const scale = Math.max(scaleX, scaleY);
+                    await new Promise((resolve) => {
+                        img.onload = () => {
+                            const scaleX = slideWidth / img.width;
+                            const scaleY = slideHeight / img.height;
+                            const scale = Math.max(scaleX, scaleY);
 
-                        const scaledWidth = img.width * scale;
-                        const scaledHeight = img.height * scale;
+                            const scaledWidth = img.width * scale;
+                            const scaledHeight = img.height * scale;
 
-                        // Calculate drop position relative to canvas
-                        const rect = canvasRef.current.getBoundingClientRect();
-                        const x = (e.clientX - rect.left) / 0.4;
+                            const rect = canvasRef.current.getBoundingClientRect();
+                            const x = (e.clientX - rect.left) / 0.4;
 
-                        // Snap to the nearest slide start
-                        const slideIndex = Math.max(0, Math.min(slideCount - 1, Math.floor(x / slideWidth)));
-                        const slideStart = slideIndex * slideWidth;
+                            const slideIndex = Math.max(0, Math.min(slideCount - 1, Math.floor(x / slideWidth)));
+                            const slideStart = slideIndex * slideWidth;
 
-                        // Center in the slide (both horizontally and vertically)
-                        const left = slideStart + (slideWidth - scaledWidth) / 2;
-                        const top = (slideHeight - scaledHeight) / 2;
+                            const left = slideStart + (slideWidth - scaledWidth) / 2;
+                            const top = (slideHeight - scaledHeight) / 2;
 
-                        addImage({
-                            id: Math.random().toString(36).substr(2, 9),
-                            url: event.target.result,
-                            name: file.name,
-                            left: left,
-                            top: top,
-                            scaleX: scale,
-                            scaleY: scale,
-                        });
-                    };
-                    img.src = event.target.result;
-                };
-                reader.readAsDataURL(file);
+                            addImage({
+                                id: Math.random().toString(36).substr(2, 9),
+                                url: dataUrl,
+                                name: file.name,
+                                left: left,
+                                top: top,
+                                scaleX: scale,
+                                scaleY: scale,
+                            });
+                            resolve();
+                        };
+                        img.src = dataUrl;
+                    });
+                } catch (error) {
+                    console.error('Drop processing failed:', error);
+                }
             }
-        });
+        }
+        setIsProcessingDrop(false);
     };
 
     return (
@@ -305,8 +316,18 @@ const CanvasEditor = () => {
                 ref={containerRef}
                 className={`canvas-container relative shadow-2xl border-[20px] border-white rounded-xl bg-white transition-all transform origin-top-left scale-[0.4] ${isResizing ? 'cursor-grabbing transition-none' : ''}`}
             >
-                <div className="overflow-hidden w-full h-full">
+                <div className="overflow-hidden w-full h-full relative">
                     <canvas ref={canvasRef} />
+
+                    {/* Drop Processing Overlay */}
+                    {isProcessingDrop && (
+                        <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center">
+                            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4"></div>
+                            <p className="text-blue-600 font-bold text-2xl animate-pulse text-center">
+                                OPTIMIZING FOR INSTAGRAM...
+                            </p>
+                        </div>
+                    )}
                 </div>
 
                 {/* Resize Handle */}

@@ -6,7 +6,7 @@ const SlideCountSelector = () => {
 
     const handleChange = (e) => {
         const value = parseInt(e.target.value, 10);
-        if (value >= 1 && value <= 15) {
+        if (value >= 1 && value <= 20) {
             setSlideCount(value);
         }
     };
@@ -25,7 +25,7 @@ const SlideCountSelector = () => {
                 <input
                     type="range"
                     min="1"
-                    max="15"
+                    max="20"
                     step="1"
                     value={slideCount}
                     onChange={handleChange}
@@ -33,7 +33,7 @@ const SlideCountSelector = () => {
                 />
                 <div className="flex justify-between text-[9px] text-slate-400 font-bold uppercase tracking-tighter">
                     <span>1</span>
-                    <span>15</span>
+                    <span>20</span>
                 </div>
                 <div className="mt-4 pt-4 border-t border-slate-50 flex justify-between items-center text-[10px] font-bold text-slate-400 uppercase">
                     <span>Slide Size</span>
