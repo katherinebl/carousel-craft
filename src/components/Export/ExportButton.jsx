@@ -4,7 +4,7 @@ import { saveAs } from 'file-saver';
 import { useCanvasStore } from '../../store/canvasStore';
 
 const ExportButton = () => {
-    const { images, slideCount, canvasWidth, canvasHeight } = useCanvasStore();
+    const { images, slideCount, canvasWidth, canvasHeight, slideWidth, slideHeight } = useCanvasStore();
     const [isExporting, setIsExporting] = useState(false);
 
     const handleExport = async () => {
@@ -45,10 +45,10 @@ const ExportButton = () => {
             // 3. Slice and Zip
             for (let i = 0; i < slideCount; i++) {
                 const sliceCanvas = document.createElement('canvas');
-                sliceCanvas.width = 1080;
-                sliceCanvas.height = 1080;
+                sliceCanvas.width = slideWidth;
+                sliceCanvas.height = slideHeight;
                 const sliceCtx = sliceCanvas.getContext('2d');
-                sliceCtx.drawImage(tempCanvas, i * 1080, 0, 1080, 1080, 0, 0, 1080, 1080);
+                sliceCtx.drawImage(tempCanvas, i * slideWidth, 0, slideWidth, slideHeight, 0, 0, slideWidth, slideHeight);
 
                 const blob = await new Promise(resolve => sliceCanvas.toBlob(resolve, 'image/jpeg', 0.9));
                 zip.file(`slide-${String(i + 1).padStart(2, '0')}.jpg`, blob);

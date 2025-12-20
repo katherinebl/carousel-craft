@@ -2,10 +2,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useCanvasStore } from '../../store/canvasStore';
 
 const CarouselPreview = () => {
-    const { slideCount, images, canvasWidth, canvasHeight } = useCanvasStore();
+    const { slideCount, images, canvasWidth, canvasHeight, slideWidth, slideHeight } = useCanvasStore();
     const [currentSlide, setCurrentSlide] = useState(0);
     const [slides, setSlides] = useState([]);
     const canvasRef = useRef(null);
+
+    const previewRef = useRef(null);
+
+    useEffect(() => {
+        if (previewRef.current) {
+            const previewWidth = 540;
+            const previewHeight = (previewWidth * slideHeight) / slideWidth;
+            previewRef.current.style.setProperty('--preview-width', `${previewWidth}px`);
+            previewRef.current.style.setProperty('--preview-height', `${previewHeight}px`);
+        }
+    }, [slideWidth, slideHeight]);
 
     useEffect(() => {
         // Generate slice previews
@@ -41,10 +52,10 @@ const CarouselPreview = () => {
             // 3. Slice the canvas
             for (let i = 0; i < slideCount; i++) {
                 const sliceCanvas = document.createElement('canvas');
-                sliceCanvas.width = 1080;
-                sliceCanvas.height = 1080;
+                sliceCanvas.width = slideWidth;
+                sliceCanvas.height = slideHeight;
                 const sliceCtx = sliceCanvas.getContext('2d');
-                sliceCtx.drawImage(tempCanvas, i * 1080, 0, 1080, 1080, 0, 0, 1080, 1080);
+                sliceCtx.drawImage(tempCanvas, i * slideWidth, 0, slideWidth, slideHeight, 0, 0, slideWidth, slideHeight);
                 newSlides.push(sliceCanvas.toDataURL('image/jpeg', 0.9));
             }
 
@@ -65,7 +76,10 @@ const CarouselPreview = () => {
             </div>
 
             <div className="relative group">
-                <div className="w-[540px] aspect-square bg-white shadow-2xl rounded-sm overflow-hidden border border-slate-200">
+                <div
+                    ref={previewRef}
+                    className="preview-window-container bg-white shadow-2xl rounded-sm overflow-hidden border border-slate-200 max-h-[70vh]"
+                >
                     {slides.length > 0 ? (
                         <img
                             src={slides[currentSlide]}

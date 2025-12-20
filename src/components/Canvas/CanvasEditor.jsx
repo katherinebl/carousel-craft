@@ -1,11 +1,16 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { Canvas, FabricImage, Line, FabricText, Rect } from 'fabric';
 import { useCanvasStore } from '../../store/canvasStore';
 
 const CanvasEditor = () => {
     const canvasRef = useRef(null);
     const fabricRef = useRef(null);
-    const { slideCount, canvasWidth, canvasHeight, images, updateImage, setSelectedImageId, addImage } = useCanvasStore();
+    const containerRef = useRef(null);
+    const { slideCount, slideWidth, slideHeight, canvasWidth, canvasHeight, images, updateImage, setSelectedImageId, addImage, setSlideDimensions } = useCanvasStore();
+    const [isResizing, setIsResizing] = useState(false);
+    const startPosRef = useRef({ x: 0, y: 0, w: 0, h: 0, ratio: 1 });
+    const currentSizeRef = useRef({ w: 0, h: 0 });
+    const requestRef = useRef();
 
     // Initialize Canvas
     useEffect(() => {
@@ -48,9 +53,13 @@ const CanvasEditor = () => {
 
     // Sync dimensions
     useEffect(() => {
-        if (fabricRef.current) {
+        if (fabricRef.current && containerRef.current) {
             const canvas = fabricRef.current;
-            canvas.setDimensions({ width: canvasHeight, height: canvasHeight }); // Start with one, will sync
+
+            // Update CSS variables
+            containerRef.current.style.setProperty('--canvas-width', `${canvasWidth}px`);
+            containerRef.current.style.setProperty('--canvas-height', `${canvasHeight}px`);
+
             canvas.setDimensions({ width: canvasWidth, height: canvasHeight });
             drawTemplate(canvas);
         }
@@ -86,6 +95,15 @@ const CanvasEditor = () => {
                     } catch (err) {
                         console.error(err);
                     }
+                } else {
+                    // Update existing image properties if they changed (e.g., during resize)
+                    exists.set({
+                        left: imgData.left,
+                        top: imgData.top,
+                        scaleX: imgData.scaleX,
+                        scaleY: imgData.scaleY
+                    });
+                    exists.setCoords();
                 }
             }
 
@@ -107,11 +125,11 @@ const CanvasEditor = () => {
         templateObjs.forEach(obj => canvas.remove(obj));
 
         for (let i = 0; i < slideCount; i++) {
-            const x = i * 1080;
+            const x = i * slideWidth;
 
             // Slide border
             if (i > 0) {
-                const line = new Line([x, 0, x, canvasHeight], {
+                const line = new Line([x, 0, x, slideHeight], {
                     stroke: '#e2e8f0',
                     strokeWidth: 4,
                     strokeDashArray: [20, 20],
@@ -125,9 +143,9 @@ const CanvasEditor = () => {
 
             // Slide label
             const text = new FabricText(`SLIDE ${i + 1}`, {
-                left: x + 540,
-                top: 540,
-                fontSize: 80,
+                left: x + (slideWidth / 2),
+                top: slideHeight / 2,
+                fontSize: Math.max(20, slideHeight * 0.08),
                 fontWeight: 'bold',
                 fill: '#f1f5f9',
                 originX: 'center',
@@ -147,6 +165,89 @@ const CanvasEditor = () => {
         e.stopPropagation();
     };
 
+    const handleResizeStart = (e) => {
+        e.preventDefault();
+        setIsResizing(true);
+        startPosRef.current = {
+            x: e.clientX,
+            y: e.clientY,
+            w: slideWidth,
+            h: slideHeight,
+            ratio: slideWidth / slideHeight
+        };
+    };
+
+    const handleResizeMove = useCallback((e) => {
+        if (!isResizing || !containerRef.current || !fabricRef.current) return;
+
+        if (requestRef.current) {
+            cancelAnimationFrame(requestRef.current);
+        }
+
+        requestRef.current = requestAnimationFrame(() => {
+            const deltaX = (e.clientX - startPosRef.current.x) / 0.4;
+            let newSlideWidth = Math.max(200, startPosRef.current.w + (deltaX / slideCount));
+            let newSlideHeight = newSlideWidth / startPosRef.current.ratio;
+
+            const newCanvasWidth = newSlideWidth * slideCount;
+            const newCanvasHeight = newSlideHeight;
+
+            currentSizeRef.current = { w: newSlideWidth, h: newSlideHeight };
+
+            // 1. Update DOM via CSS variables (Ultra Fast)
+            containerRef.current.style.setProperty('--canvas-width', `${newCanvasWidth}px`);
+            containerRef.current.style.setProperty('--canvas-height', `${newCanvasHeight}px`);
+
+            // 2. Update Fabric dimensions (Directly)
+            const canvas = fabricRef.current;
+            canvas.setDimensions({ width: newCanvasWidth, height: newCanvasHeight });
+
+            // 3. Update images in Fabric directly during drag
+            const ratio = newSlideWidth / slideWidth;
+            const objects = canvas.getObjects().filter(obj => obj.id && !obj.name?.startsWith('template'));
+
+            objects.forEach(obj => {
+                const imgData = images.find(img => img.id === obj.id);
+                if (imgData) {
+                    obj.set({
+                        left: imgData.left * ratio,
+                        top: imgData.top * ratio,
+                        scaleX: imgData.scaleX * ratio,
+                        scaleY: imgData.scaleY * ratio
+                    });
+                    obj.setCoords();
+                }
+            });
+
+            // 4. Update template
+            drawTemplate(canvas);
+        });
+    }, [isResizing, slideCount, slideWidth, slideHeight, images]);
+
+    const handleResizeEnd = useCallback(() => {
+        if (isResizing && currentSizeRef.current.w > 0) {
+            setSlideDimensions(currentSizeRef.current.w, currentSizeRef.current.h);
+        }
+        setIsResizing(false);
+        if (requestRef.current) {
+            cancelAnimationFrame(requestRef.current);
+        }
+    }, [isResizing, setSlideDimensions, slideWidth, slideHeight]);
+
+    useEffect(() => {
+        if (isResizing) {
+            window.addEventListener('mousemove', handleResizeMove);
+            window.addEventListener('mouseup', handleResizeEnd);
+        } else {
+            window.removeEventListener('mousemove', handleResizeMove);
+            window.removeEventListener('mouseup', handleResizeEnd);
+        }
+        return () => {
+            window.removeEventListener('mousemove', handleResizeMove);
+            window.removeEventListener('mouseup', handleResizeEnd);
+        };
+    }, [isResizing, handleResizeMove, handleResizeEnd]);
+
     const handleDrop = (e) => {
         e.preventDefault();
         e.stopPropagation();
@@ -158,9 +259,8 @@ const CanvasEditor = () => {
                 reader.onload = (event) => {
                     const img = new Image();
                     img.onload = () => {
-                        const targetSize = 1080;
-                        const scaleX = targetSize / img.width;
-                        const scaleY = targetSize / img.height;
+                        const scaleX = slideWidth / img.width;
+                        const scaleY = slideHeight / img.height;
                         const scale = Math.max(scaleX, scaleY);
 
                         const scaledWidth = img.width * scale;
@@ -171,12 +271,12 @@ const CanvasEditor = () => {
                         const x = (e.clientX - rect.left) / 0.4;
 
                         // Snap to the nearest slide start
-                        const slideIndex = Math.max(0, Math.min(slideCount - 1, Math.floor(x / 1080)));
-                        const slideStart = slideIndex * 1080;
+                        const slideIndex = Math.max(0, Math.min(slideCount - 1, Math.floor(x / slideWidth)));
+                        const slideStart = slideIndex * slideWidth;
 
                         // Center in the slide (both horizontally and vertically)
-                        const left = slideStart + (1080 - scaledWidth) / 2;
-                        const top = (1080 - scaledHeight) / 2;
+                        const left = slideStart + (slideWidth - scaledWidth) / 2;
+                        const top = (slideHeight - scaledHeight) / 2;
 
                         addImage({
                             id: Math.random().toString(36).substr(2, 9),
@@ -201,8 +301,23 @@ const CanvasEditor = () => {
             onDragOver={handleDragOver}
             onDrop={handleDrop}
         >
-            <div className="relative shadow-2xl border-[20px] border-white rounded-xl overflow-hidden bg-white transition-all transform origin-top-left scale-[0.4]">
-                <canvas ref={canvasRef} />
+            <div
+                ref={containerRef}
+                className={`canvas-container relative shadow-2xl border-[20px] border-white rounded-xl bg-white transition-all transform origin-top-left scale-[0.4] ${isResizing ? 'cursor-grabbing transition-none' : ''}`}
+            >
+                <div className="overflow-hidden w-full h-full">
+                    <canvas ref={canvasRef} />
+                </div>
+
+                {/* Resize Handle */}
+                <div
+                    onMouseDown={handleResizeStart}
+                    className="absolute bottom-0 right-0 w-12 h-12 bg-blue-600 cursor-nwse-resize flex items-center justify-center rounded-tl-2xl shadow-lg z-50 hover:bg-blue-700 transition-colors"
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                    </svg>
+                </div>
             </div>
         </div>
     );

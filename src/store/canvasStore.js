@@ -2,6 +2,8 @@ import { create } from 'zustand';
 
 export const useCanvasStore = create((set) => ({
     slideCount: 5,
+    slideWidth: 1080,
+    slideHeight: 1080,
     canvasWidth: 5 * 1080,
     canvasHeight: 1080,
     images: [],
@@ -10,8 +12,25 @@ export const useCanvasStore = create((set) => ({
 
     setSlideCount: (count) => set((state) => ({
         slideCount: count,
-        canvasWidth: count * 1080
+        canvasWidth: count * state.slideWidth
     })),
+
+    setSlideDimensions: (width, height) => set((state) => {
+        const ratio = width / state.slideWidth;
+        return {
+            slideWidth: width,
+            slideHeight: height,
+            canvasWidth: state.slideCount * width,
+            canvasHeight: height,
+            images: state.images.map(img => ({
+                ...img,
+                left: img.left * ratio,
+                top: img.top * ratio,
+                scaleX: img.scaleX * ratio,
+                scaleY: img.scaleY * ratio
+            }))
+        };
+    }),
 
     addImage: (image) => set((state) => ({
         images: [...state.images, image],

@@ -46,3 +46,14 @@ body {
 .canvas-scroll-container::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* Dynamic Dimension Classes */
+.canvas-container {
+  width: var(--canvas-width, 5400px);
+  height: var(--canvas-height, 1080px);
+}
+
+.preview-window-container {
+  width: var(--preview-width, 540px);
+  height: var(--preview-height, 540px);
+}
