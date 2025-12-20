@@ -5,7 +5,7 @@ import { useCanvasStore } from '../../store/canvasStore';
 const CanvasEditor = () => {
     const canvasRef = useRef(null);
     const fabricRef = useRef(null);
-    const { slideCount, canvasWidth, canvasHeight, images, updateImage, setSelectedImageId } = useCanvasStore();
+    const { slideCount, canvasWidth, canvasHeight, images, updateImage, setSelectedImageId, addImage } = useCanvasStore();
 
     // Initialize Canvas
     useEffect(() => {
@@ -142,8 +142,65 @@ const CanvasEditor = () => {
         canvas.renderAll();
     };
 
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const files = Array.from(e.dataTransfer.files);
+        files.forEach((file) => {
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const targetSize = 1080;
+                        const scaleX = targetSize / img.width;
+                        const scaleY = targetSize / img.height;
+                        const scale = Math.max(scaleX, scaleY);
+
+                        const scaledWidth = img.width * scale;
+                        const scaledHeight = img.height * scale;
+
+                        // Calculate drop position relative to canvas
+                        const rect = canvasRef.current.getBoundingClientRect();
+                        const x = (e.clientX - rect.left) / 0.4;
+
+                        // Snap to the nearest slide start
+                        const slideIndex = Math.max(0, Math.min(slideCount - 1, Math.floor(x / 1080)));
+                        const slideStart = slideIndex * 1080;
+
+                        // Center in the slide (both horizontally and vertically)
+                        const left = slideStart + (1080 - scaledWidth) / 2;
+                        const top = (1080 - scaledHeight) / 2;
+
+                        addImage({
+                            id: Math.random().toString(36).substr(2, 9),
+                            url: event.target.result,
+                            name: file.name,
+                            left: left,
+                            top: top,
+                            scaleX: scale,
+                            scaleY: scale,
+                        });
+                    };
+                    img.src = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+    };
+
     return (
-        <div className="relative shadow-inner bg-slate-100 p-8 rounded-3xl">
+        <div
+            className="relative shadow-inner bg-slate-100 p-8 rounded-3xl"
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+        >
             <div className="relative shadow-2xl border-[20px] border-white rounded-xl overflow-hidden bg-white transition-all transform origin-top-left scale-[0.4]">
                 <canvas ref={canvasRef} />
             </div>

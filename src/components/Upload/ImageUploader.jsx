@@ -10,15 +10,31 @@ const ImageUploader = () => {
         files.forEach((file) => {
             const reader = new FileReader();
             reader.onload = (event) => {
-                addImage({
-                    id: Math.random().toString(36).substr(2, 9),
-                    url: event.target.result,
-                    name: file.name,
-                    left: 100,
-                    top: 100,
-                    scaleX: 0.5,
-                    scaleY: 0.5,
-                });
+                const img = new Image();
+                img.onload = () => {
+                    const targetSize = 1080;
+                    const scaleX = targetSize / img.width;
+                    const scaleY = targetSize / img.height;
+                    const scale = Math.max(scaleX, scaleY);
+
+                    const scaledWidth = img.width * scale;
+                    const scaledHeight = img.height * scale;
+
+                    // Center in the first slide (1080px wide)
+                    const left = (1080 - scaledWidth) / 2;
+                    const top = (1080 - scaledHeight) / 2;
+
+                    addImage({
+                        id: Math.random().toString(36).substr(2, 9),
+                        url: event.target.result,
+                        name: file.name,
+                        left: left,
+                        top: top,
+                        scaleX: scale,
+                        scaleY: scale,
+                    });
+                };
+                img.src = event.target.result;
             };
             reader.readAsDataURL(file);
         });

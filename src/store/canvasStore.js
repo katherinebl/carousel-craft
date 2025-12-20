@@ -14,7 +14,8 @@ export const useCanvasStore = create((set) => ({
     })),
 
     addImage: (image) => set((state) => ({
-        images: [...state.images, image]
+        images: [...state.images, image],
+        selectedImageId: image.id
     })),
 
     removeImage: (id) => set((state) => ({
