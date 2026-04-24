@@ -40,7 +40,7 @@ const ImageUploader = () => {
                     const top = (slideHeight - scaledHeight) / 2;
 
                     addImage({
-                        id: Math.random().toString(36).substr(2, 9),
+                        id: crypto.randomUUID(),
                         url: dataUrl,
                         name: file.name,
                         left: left,
