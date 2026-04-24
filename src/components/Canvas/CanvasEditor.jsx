@@ -169,12 +169,14 @@ const CanvasEditor = () => {
     const handleResizeStart = (e) => {
         e.preventDefault();
         setIsResizing(true);
+        const containerRect = containerRef.current.getBoundingClientRect();
         startPosRef.current = {
             x: e.clientX,
             y: e.clientY,
             w: slideWidth,
             h: slideHeight,
-            ratio: slideWidth / slideHeight
+            ratio: slideWidth / slideHeight,
+            cssScale: containerRect.width / containerRef.current.offsetWidth
         };
     };
 
@@ -186,7 +188,7 @@ const CanvasEditor = () => {
         }
 
         requestRef.current = requestAnimationFrame(() => {
-            const deltaX = (e.clientX - startPosRef.current.x) / 0.4;
+            const deltaX = (e.clientX - startPosRef.current.x) / startPosRef.current.cssScale;
             let newSlideWidth = Math.max(200, startPosRef.current.w + (deltaX / slideCount));
             let newSlideHeight = newSlideWidth / startPosRef.current.ratio;
 
@@ -277,7 +279,8 @@ const CanvasEditor = () => {
                             const scaledHeight = img.height * scale;
 
                             const rect = canvasRef.current.getBoundingClientRect();
-                            const x = (e.clientX - rect.left) / 0.4;
+                            const cssScale = containerRef.current.getBoundingClientRect().width / containerRef.current.offsetWidth;
+                            const x = (e.clientX - rect.left) / cssScale;
 
                             const slideIndex = Math.max(0, Math.min(slideCount - 1, Math.floor(x / slideWidth)));
                             const slideStart = slideIndex * slideWidth;
