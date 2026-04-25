@@ -4,7 +4,7 @@ import { optimizeImage, fileToDataURL, formatSize } from '../../utils/imageUtils
 
 const ImageUploader = () => {
     const fileInputRef = useRef(null);
-    const { addImage, slideWidth, slideHeight } = useCanvasStore();
+    const { addImage, slideHeight } = useCanvasStore();
     const [isOptimizing, setIsOptimizing] = useState(false);
     const [optimizationLog, setOptimizationLog] = useState(null);
 
@@ -30,24 +30,23 @@ const ImageUploader = () => {
                 await new Promise((resolve) => {
                     const img = new Image();
                     img.onload = () => {
-                        const scaleX = slideWidth / img.width;
-                        const scaleY = slideHeight / img.height;
-                        const scale = Math.max(scaleX, scaleY);
-
+                        const scale = slideHeight / img.height;
                         const scaledWidth = img.width * scale;
-                        const scaledHeight = img.height * scale;
 
-                        const left = (slideWidth - scaledWidth) / 2;
-                        const top = (slideHeight - scaledHeight) / 2;
+                        const left = useCanvasStore.getState().images.reduce(
+                            (max, im) => Math.max(max, im.left + (im.scaledWidth || 0)),
+                            0
+                        );
 
                         addImage({
                             id: crypto.randomUUID(),
                             url: dataUrl,
                             name: file.name,
-                            left: left,
-                            top: top,
+                            left,
+                            top: 0,
                             scaleX: scale,
                             scaleY: scale,
+                            scaledWidth,
                         });
                         resolve();
                     };

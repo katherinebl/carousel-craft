@@ -271,31 +271,23 @@ const CanvasEditor = () => {
                     const img = new Image();
                     await new Promise((resolve) => {
                         img.onload = () => {
-                            const scaleX = slideWidth / img.width;
-                            const scaleY = slideHeight / img.height;
-                            const scale = Math.max(scaleX, scaleY);
-
+                            const scale = slideHeight / img.height;
                             const scaledWidth = img.width * scale;
-                            const scaledHeight = img.height * scale;
 
-                            const rect = canvasRef.current.getBoundingClientRect();
-                            const cssScale = containerRef.current.getBoundingClientRect().width / containerRef.current.offsetWidth;
-                            const x = (e.clientX - rect.left) / cssScale;
-
-                            const slideIndex = Math.max(0, Math.min(slideCount - 1, Math.floor(x / slideWidth)));
-                            const slideStart = slideIndex * slideWidth;
-
-                            const left = slideStart + (slideWidth - scaledWidth) / 2;
-                            const top = (slideHeight - scaledHeight) / 2;
+                            const left = useCanvasStore.getState().images.reduce(
+                                (max, im) => Math.max(max, im.left + (im.scaledWidth || 0)),
+                                0
+                            );
 
                             addImage({
                                 id: crypto.randomUUID(),
                                 url: dataUrl,
                                 name: file.name,
-                                left: left,
-                                top: top,
+                                left,
+                                top: 0,
                                 scaleX: scale,
                                 scaleY: scale,
+                                scaledWidth,
                             });
                             resolve();
                         };

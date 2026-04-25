@@ -26,7 +26,8 @@ export const useCanvasStore = create(
             })),
 
             setSlideDimensions: (width, height) => set((state) => {
-                const ratio = width / state.slideWidth;
+                const ratioX = width / state.slideWidth;
+                const ratioY = height / state.slideHeight;
                 return {
                     slideWidth: width,
                     slideHeight: height,
@@ -34,10 +35,11 @@ export const useCanvasStore = create(
                     canvasHeight: height,
                     images: state.images.map(img => ({
                         ...img,
-                        left: img.left * ratio,
-                        top: img.top * ratio,
-                        scaleX: img.scaleX * ratio,
-                        scaleY: img.scaleY * ratio
+                        left: img.left * ratioX,
+                        top: img.top * ratioY,
+                        scaleX: img.scaleX * ratioX,
+                        scaleY: img.scaleY * ratioY,
+                        scaledWidth: img.scaledWidth != null ? img.scaledWidth * ratioX : undefined
                     }))
                 };
             }),

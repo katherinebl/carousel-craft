@@ -41,7 +41,6 @@ const CarouselPreview = () => {
                         ctx.save();
                         ctx.translate(imgData.left, imgData.top);
                         ctx.scale(imgData.scaleX, imgData.scaleY);
-                        // Fabric stores position as top-left by default in our current setup
                         ctx.drawImage(img, 0, 0);
                         ctx.restore();
                         resolve();
@@ -63,7 +62,7 @@ const CarouselPreview = () => {
         };
 
         generateSlides();
-    }, [images, slideCount, canvasWidth, canvasHeight]);
+    }, [images, slideCount, slideWidth, slideHeight, canvasWidth, canvasHeight]);
 
     const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slideCount);
     const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slideCount) % slideCount);
@@ -84,7 +83,7 @@ const CarouselPreview = () => {
                         <img
                             src={slides[currentSlide]}
                             alt={`Slide ${currentSlide + 1}`}
-                            className="w-full h-full object-contain"
+                            className="w-full h-full object-cover"
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center text-slate-400 italic">
