@@ -27,29 +27,32 @@ const ImageUploader = () => {
                 const dataUrl = await fileToDataURL(compressedFile);
 
                 // 3. Add to canvas
-                const img = new Image();
-                img.onload = () => {
-                    const scaleX = slideWidth / img.width;
-                    const scaleY = slideHeight / img.height;
-                    const scale = Math.max(scaleX, scaleY);
+                await new Promise((resolve) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const scaleX = slideWidth / img.width;
+                        const scaleY = slideHeight / img.height;
+                        const scale = Math.max(scaleX, scaleY);
 
-                    const scaledWidth = img.width * scale;
-                    const scaledHeight = img.height * scale;
+                        const scaledWidth = img.width * scale;
+                        const scaledHeight = img.height * scale;
 
-                    const left = (slideWidth - scaledWidth) / 2;
-                    const top = (slideHeight - scaledHeight) / 2;
+                        const left = (slideWidth - scaledWidth) / 2;
+                        const top = (slideHeight - scaledHeight) / 2;
 
-                    addImage({
-                        id: crypto.randomUUID(),
-                        url: dataUrl,
-                        name: file.name,
-                        left: left,
-                        top: top,
-                        scaleX: scale,
-                        scaleY: scale,
-                    });
-                };
-                img.src = dataUrl;
+                        addImage({
+                            id: crypto.randomUUID(),
+                            url: dataUrl,
+                            name: file.name,
+                            left: left,
+                            top: top,
+                            scaleX: scale,
+                            scaleY: scale,
+                        });
+                        resolve();
+                    };
+                    img.src = dataUrl;
+                });
             } catch (error) {
                 console.error('Optimization error:', error);
                 alert(`Could not optimize ${file.name}. Falling back to original...`);
