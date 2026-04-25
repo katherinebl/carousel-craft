@@ -1,5 +1,12 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+import { get, set, del } from 'idb-keyval';
+
+const idbStorage = createJSONStorage(() => ({
+    getItem: (name) => get(name).then(val => val ?? null),
+    setItem: (name, value) => set(name, value),
+    removeItem: (name) => del(name),
+}));
 
 export const useCanvasStore = create(
     persist(
@@ -68,6 +75,7 @@ export const useCanvasStore = create(
         }),
         {
             name: 'carousel-craft-storage',
+            storage: idbStorage,
             partialize: (state) => ({
                 slideCount: state.slideCount,
                 slideWidth: state.slideWidth,
