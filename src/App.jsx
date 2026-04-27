@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useCanvasStore } from './store/canvasStore';
 import CanvasEditor from './components/Canvas/CanvasEditor';
 import EmptyCanvasState from './components/Canvas/EmptyCanvasState';
@@ -10,6 +10,20 @@ import CarouselPreview from './components/Preview/CarouselPreview';
 
 function App() {
   const { mode, setMode, images } = useCanvasStore();
+  const canvasScrollRef = useRef(null);
+
+  useEffect(() => {
+    const el = canvasScrollRef.current;
+    if (!el) return;
+    const onWheel = (e) => {
+      if (e.deltaY === 0) return;
+      e.preventDefault();
+      const delta = e.deltaMode === 1 ? e.deltaY * 40 : e.deltaMode === 2 ? e.deltaY * 800 : e.deltaY;
+      el.scrollLeft += delta;
+    };
+    el.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    return () => el.removeEventListener('wheel', onWheel, { capture: true });
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
@@ -75,7 +89,7 @@ function App() {
             </aside>
 
             {/* Canvas Area */}
-            <section className="flex-1 bg-slate-200 canvas-scroll-container min-h-0 overflow-auto flex flex-col">
+            <section ref={canvasScrollRef} className="flex-1 bg-slate-200 canvas-scroll-container min-h-0 overflow-auto flex flex-col">
               {images.length === 0 ? (
                 <EmptyCanvasState />
               ) : (

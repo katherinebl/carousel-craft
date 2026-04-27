@@ -3,6 +3,9 @@ import { Canvas, FabricImage, Line, FabricText } from 'fabric';
 import { useCanvasStore } from '../../store/canvasStore';
 import { useImageUpload } from '../../hooks/useImageUpload';
 
+const LONG_PRESS_MS = 500;
+const MOVE_THRESHOLD_PX = 10;
+
 const CanvasEditor = () => {
     const canvasRef = useRef(null);
     const fabricRef = useRef(null);
@@ -15,6 +18,91 @@ const CanvasEditor = () => {
     const currentSizeRef = useRef({ w: 0, h: 0 });
     const requestRef = useRef();
 
+    // pointer: coarse = touch screen (phone/tablet); pointer: fine = mouse (desktop)
+    const isTouchDevice = useRef(
+        typeof window !== 'undefined' && window.matchMedia('(pointer: coarse)').matches
+    );
+    const longPressTimer = useRef(null);
+    const longPressStartPos = useRef({ x: 0, y: 0 });
+
+    // Convert touch client coords to Fabric canvas space
+    const touchToCanvasPoint = useCallback((touch) => {
+        if (!fabricRef.current) return { x: 0, y: 0 };
+        const canvasEl = fabricRef.current.lowerCanvasEl;
+        const rect = canvasEl.getBoundingClientRect();
+        const scaleX = rect.width / fabricRef.current.width;
+        const scaleY = rect.height / fabricRef.current.height;
+        return {
+            x: (touch.clientX - rect.left) / scaleX,
+            y: (touch.clientY - rect.top) / scaleY,
+        };
+    }, []);
+
+    // Find the top-most image object under a canvas-space point
+    const findImageAtPoint = useCallback((point) => {
+        if (!fabricRef.current) return null;
+        const objects = fabricRef.current.getObjects()
+            .filter(obj => obj.id && !obj.name?.startsWith('template'))
+            .reverse();
+        return objects.find(obj => {
+            const b = obj.getBoundingRect();
+            return point.x >= b.left && point.x <= b.left + b.width &&
+                   point.y >= b.top  && point.y <= b.top  + b.height;
+        }) || null;
+    }, []);
+
+    // Revert all images to non-interactive (touch default state)
+    const disableAllImageInteraction = useCallback(() => {
+        if (!fabricRef.current) return;
+        fabricRef.current.getObjects()
+            .filter(obj => obj.id && !obj.name?.startsWith('template'))
+            .forEach(obj => obj.set({ evented: false, selectable: false }));
+        fabricRef.current.renderAll();
+    }, []);
+
+    // Long-press touch handlers
+    const handleCanvasTouchStart = useCallback((e) => {
+        if (!isTouchDevice.current || !fabricRef.current) return;
+        const touch = e.touches[0];
+        longPressStartPos.current = { x: touch.clientX, y: touch.clientY };
+
+        const point = touchToCanvasPoint(touch);
+        const target = findImageAtPoint(point);
+        if (!target) return;
+
+        longPressTimer.current = setTimeout(() => {
+            longPressTimer.current = null;
+            target.set({ evented: true, selectable: true });
+            fabricRef.current.setActiveObject(target);
+            fabricRef.current.renderAll();
+            setSelectedImageId(target.id);
+            if (navigator.vibrate) navigator.vibrate(50);
+        }, LONG_PRESS_MS);
+    }, [touchToCanvasPoint, findImageAtPoint, setSelectedImageId]);
+
+    const handleCanvasTouchMove = useCallback((e) => {
+        if (!longPressTimer.current) return;
+        const touch = e.touches[0];
+        const dx = touch.clientX - longPressStartPos.current.x;
+        const dy = touch.clientY - longPressStartPos.current.y;
+        if (Math.sqrt(dx * dx + dy * dy) > MOVE_THRESHOLD_PX) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+    }, []);
+
+    const handleCanvasTouchEnd = useCallback(() => {
+        if (longPressTimer.current) {
+            clearTimeout(longPressTimer.current);
+            longPressTimer.current = null;
+        }
+    }, []);
+
+    // Suppress context menu on long-press (iOS)
+    const handleContextMenu = useCallback((e) => {
+        if (isTouchDevice.current) e.preventDefault();
+    }, []);
+
     // Initialize Canvas
     useEffect(() => {
         if (!canvasRef.current) return;
@@ -24,13 +112,17 @@ const CanvasEditor = () => {
             height: canvasHeight,
             backgroundColor: '#ffffff',
             preserveObjectStacking: true,
+            allowTouchScrolling: true,
         });
 
         fabricRef.current = canvas;
 
         canvas.on('selection:created', (e) => setSelectedImageId(e.selected[0]?.id));
         canvas.on('selection:updated', (e) => setSelectedImageId(e.selected[0]?.id));
-        canvas.on('selection:cleared', () => setSelectedImageId(null));
+        canvas.on('selection:cleared', () => {
+            setSelectedImageId(null);
+            if (isTouchDevice.current) disableAllImageInteraction();
+        });
 
         canvas.on('object:modified', (e) => {
             const obj = e.target;
@@ -80,6 +172,8 @@ const CanvasEditor = () => {
                             top: imgData.top || 0,
                             scaleX: imgData.scaleX || 0.5,
                             scaleY: imgData.scaleY || 0.5,
+                            evented: !isTouchDevice.current,
+                            selectable: !isTouchDevice.current,
                         });
                         img.setControlsVisibility({ mt: false, mb: false, ml: false, mr: false });
                         canvas.add(img);
@@ -240,6 +334,10 @@ const CanvasEditor = () => {
             <div
                 ref={containerRef}
                 className={`canvas-container relative shadow-2xl border-[20px] border-white rounded-xl bg-white transition-all transform origin-top-left scale-[0.4] ${isResizing ? 'cursor-grabbing transition-none' : ''}`}
+                onTouchStart={handleCanvasTouchStart}
+                onTouchMove={handleCanvasTouchMove}
+                onTouchEnd={handleCanvasTouchEnd}
+                onContextMenu={handleContextMenu}
             >
                 <div className="overflow-hidden w-full h-full relative">
                     <canvas ref={canvasRef} />
