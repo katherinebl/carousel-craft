@@ -71,7 +71,8 @@ const ExportButton = () => {
             className={`relative overflow-hidden bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-semibold text-sm transition-all shadow-md active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed`}
         >
             <span className={isExporting ? 'opacity-0' : 'opacity-100'}>
-                Export Carousel
+                <span className="hidden sm:inline">Export Carousel</span>
+                <span className="sm:hidden">Export</span>
             </span>
             {isExporting && (
                 <div className="absolute inset-0 flex items-center justify-center">
