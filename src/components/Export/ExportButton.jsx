@@ -68,7 +68,7 @@ const ExportButton = () => {
         <button
             onClick={handleExport}
             disabled={isExporting}
-            className={`relative overflow-hidden bg-slate-900 hover:bg-slate-800 text-white px-6 py-2 rounded-lg font-semibold text-sm transition-all shadow-md active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed`}
+            className={`relative overflow-hidden bg-brand-600 hover:bg-brand-700 text-white px-6 py-2 rounded-lg font-semibold text-sm transition-all shadow-md active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed`}
         >
             <span className={isExporting ? 'opacity-0' : 'opacity-100'}>
                 <span className="hidden sm:inline">Export Carousel</span>
