@@ -63,20 +63,20 @@ function App() {
         {mode === 'edit' ? (
           <>
             {/* Sidebar */}
-            <aside className="w-full md:w-56 lg:w-72 bg-white border-b md:border-b-0 md:border-r border-slate-100 flex-shrink-0 flex flex-col shadow-sm h-56 md:h-auto overflow-y-auto">
-              <div className="p-5 md:p-6 lg:p-8 space-y-6 md:space-y-10">
+            <aside className="w-full md:w-56 lg:w-72 bg-white border-b md:border-b-0 md:border-r border-slate-100 flex-shrink-0 flex flex-col shadow-sm h-auto max-h-[45vh] md:max-h-none md:h-auto overflow-y-auto">
+              <div className="p-4 md:p-6 lg:p-8 space-y-4 md:space-y-10">
                 <section>
-                  <h2 className="text-[9px] md:text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-3 md:mb-6">Setup</h2>
+                  <h2 className="text-[9px] md:text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-2 md:mb-6">Setup</h2>
                   <SlideCountSelector />
                 </section>
 
                 <section>
-                  <h2 className="text-[9px] md:text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-3 md:mb-6">Content</h2>
+                  <h2 className="text-[9px] md:text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-2 md:mb-6">Content</h2>
                   <ImageUploader />
                 </section>
 
                 <section>
-                  <h2 className="text-[9px] md:text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-3 md:mb-6">Arrange</h2>
+                  <h2 className="text-[9px] md:text-[10px] font-black text-slate-300 uppercase tracking-[0.2em] mb-2 md:mb-6">Manage</h2>
                   <ImageControls />
                 </section>
               </div>

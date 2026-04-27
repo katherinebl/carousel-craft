@@ -62,18 +62,7 @@ export const useCanvasStore = create(
 
             setMode: (mode) => set({ mode }),
 
-            reorderImage: (id, direction) => set((state) => {
-                const index = state.images.findIndex((img) => img.id === id);
-                if (index === -1) return state;
-
-                const newImages = [...state.images];
-                const targetIndex = direction === 'front' ? newImages.length - 1 : 0;
-
-                const [movedImage] = newImages.splice(index, 1);
-                newImages.splice(targetIndex, 0, movedImage);
-
-                return { images: newImages };
-            })
+            clearImages: () => set({ images: [], selectedImageId: null })
         }),
         {
             name: 'carousel-craft-storage',

@@ -13,8 +13,8 @@ const SlideCountSelector = () => {
 
     return (
         <div className="space-y-6">
-            <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
-                <div className="flex justify-between items-center mb-4">
+            <div className="bg-white p-4 md:p-5 rounded-2xl border border-slate-100 shadow-sm">
+                <div className="flex justify-between items-center mb-3 md:mb-4">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                         Slides
                     </label>
