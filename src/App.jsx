@@ -1,6 +1,7 @@
 import React from 'react';
 import { useCanvasStore } from './store/canvasStore';
 import CanvasEditor from './components/Canvas/CanvasEditor';
+import EmptyCanvasState from './components/Canvas/EmptyCanvasState';
 import ImageUploader from './components/Upload/ImageUploader';
 import SlideCountSelector from './components/Controls/SlideCountSelector';
 import ImageControls from './components/Controls/ImageControls';
@@ -8,7 +9,7 @@ import ExportButton from './components/Export/ExportButton';
 import CarouselPreview from './components/Preview/CarouselPreview';
 
 function App() {
-  const { mode, setMode } = useCanvasStore();
+  const { mode, setMode, images } = useCanvasStore();
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col font-sans text-slate-900">
@@ -74,10 +75,14 @@ function App() {
             </aside>
 
             {/* Canvas Area */}
-            <section className="flex-1 bg-slate-200 overflow-auto canvas-scroll-container min-h-0">
-              <div className="min-h-full min-w-max p-8 md:p-12 lg:p-20 flex items-start justify-center">
-                <CanvasEditor />
-              </div>
+            <section className="flex-1 bg-slate-200 canvas-scroll-container min-h-0 overflow-auto flex flex-col">
+              {images.length === 0 ? (
+                <EmptyCanvasState />
+              ) : (
+                <div className="min-h-full min-w-max p-8 md:p-12 lg:p-20 flex items-start justify-center">
+                  <CanvasEditor />
+                </div>
+              )}
             </section>
           </>
         ) : (

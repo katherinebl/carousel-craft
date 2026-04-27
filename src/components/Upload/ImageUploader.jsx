@@ -1,65 +1,21 @@
 import React, { useRef, useState } from 'react';
-import { useCanvasStore } from '../../store/canvasStore';
-import { optimizeImage, fileToDataURL, formatSize } from '../../utils/imageUtils';
+import { useImageUpload } from '../../hooks/useImageUpload';
+import { formatSize } from '../../utils/imageUtils';
 
 const ImageUploader = () => {
     const fileInputRef = useRef(null);
-    const { addImage, slideHeight } = useCanvasStore();
-    const [isOptimizing, setIsOptimizing] = useState(false);
+    const { processFiles, isProcessing } = useImageUpload();
     const [optimizationLog, setOptimizationLog] = useState(null);
 
     const handleFileChange = async (e) => {
         const files = Array.from(e.target.files);
         if (files.length === 0) return;
 
-        setIsOptimizing(true);
         setOptimizationLog(null);
+        const totalBefore = files.reduce((sum, f) => sum + f.size, 0);
+        await processFiles(files);
 
-        for (const file of files) {
-            try {
-                // 1. Optimize image
-                const { compressedFile, originalSize, compressedSize } = await optimizeImage(file);
-
-                // Show feedback
-                setOptimizationLog(`${formatSize(originalSize)} → ${formatSize(compressedSize)}`);
-
-                // 2. Convert to DataURL
-                const dataUrl = await fileToDataURL(compressedFile);
-
-                // 3. Add to canvas
-                await new Promise((resolve) => {
-                    const img = new Image();
-                    img.onload = () => {
-                        const scale = slideHeight / img.height;
-                        const scaledWidth = img.width * scale;
-
-                        const left = useCanvasStore.getState().images.reduce(
-                            (max, im) => Math.max(max, im.left + (im.scaledWidth || 0)),
-                            0
-                        );
-
-                        addImage({
-                            id: crypto.randomUUID(),
-                            url: dataUrl,
-                            name: file.name,
-                            left,
-                            top: 0,
-                            scaleX: scale,
-                            scaleY: scale,
-                            scaledWidth,
-                        });
-                        resolve();
-                    };
-                    img.src = dataUrl;
-                });
-            } catch (error) {
-                console.error('Optimization error:', error);
-                alert(`Could not optimize ${file.name}. Falling back to original...`);
-            }
-        }
-
-        setIsOptimizing(false);
-        // Clear log after 3 seconds
+        setOptimizationLog(formatSize(totalBefore));
         setTimeout(() => setOptimizationLog(null), 3000);
 
         if (fileInputRef.current) fileInputRef.current.value = '';
@@ -69,13 +25,13 @@ const ImageUploader = () => {
         <div className="space-y-4">
             <button
                 onClick={() => fileInputRef.current?.click()}
-                disabled={isOptimizing}
-                className={`w-full py-4 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-2 transition-all font-bold text-xs uppercase tracking-widest ${isOptimizing
-                        ? 'bg-blue-50 border-blue-200 text-blue-500 cursor-wait'
-                        : 'bg-white border-slate-200 text-slate-400 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 shadow-sm'
+                disabled={isProcessing}
+                className={`w-full py-4 border-2 border-dashed rounded-2xl flex flex-col items-center justify-center gap-2 transition-all font-bold text-xs uppercase tracking-widest ${isProcessing
+                    ? 'bg-blue-50 border-blue-200 text-blue-500 cursor-wait'
+                    : 'bg-white border-slate-200 text-slate-400 hover:border-blue-400 hover:bg-blue-50 hover:text-blue-600 shadow-sm'
                     }`}
             >
-                {isOptimizing ? (
+                {isProcessing ? (
                     <>
                         <svg className="animate-spin h-5 w-5 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
