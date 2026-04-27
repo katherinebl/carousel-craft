@@ -30,7 +30,7 @@ function App() {
       {/* Header */}
       <header className="h-14 md:h-16 bg-white border-b border-slate-200 px-4 md:px-6 flex items-center justify-between sticky top-0 z-50 shrink-0">
         <h1 className="text-lg md:text-xl font-bold text-slate-800 tracking-tight shrink-0">
-          Carousel<span className="text-blue-600">Craft</span>
+          Carousel<span className="text-brand-600">Craft</span>
         </h1>
 
         <div className="flex items-center gap-2 md:gap-4">
@@ -83,7 +83,7 @@ function App() {
 
               <div className="hidden md:block mt-auto p-8 border-t border-slate-50">
                 <p className="text-[10px] text-slate-300 font-medium text-center">
-                  CarouselCraft v1.0 • Seamless Edition
+                  CarouselCraft v1.0 • by katherine<span className="text-brand-600 font-bold">bl</span>
                 </p>
               </div>
             </aside>

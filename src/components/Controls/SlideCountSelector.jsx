@@ -18,7 +18,7 @@ const SlideCountSelector = () => {
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                         Slides
                     </label>
-                    <span className="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold">
+                    <span className="bg-brand-50 text-brand-600 px-3 py-1 rounded-full text-xs font-bold">
                         {slideCount}
                     </span>
                 </div>
@@ -29,7 +29,7 @@ const SlideCountSelector = () => {
                     step="1"
                     value={slideCount}
                     onChange={handleChange}
-                    className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-blue-600 mb-2"
+                    className="w-full h-1.5 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-[#0E8C80] mb-2"
                 />
                 <div className="flex justify-between text-[9px] text-slate-400 font-bold uppercase tracking-tighter">
                     <span>1</span>

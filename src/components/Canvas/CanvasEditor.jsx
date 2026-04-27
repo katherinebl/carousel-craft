@@ -326,7 +326,7 @@ const CanvasEditor = () => {
 
     return (
         <div
-            className={`relative shadow-inner p-8 rounded-3xl transition-colors duration-150 ${isDragOver ? 'bg-blue-50' : 'bg-slate-100'}`}
+            className={`relative shadow-inner p-8 rounded-3xl transition-colors duration-150 ${isDragOver ? 'bg-brand-50' : 'bg-slate-100'}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -344,8 +344,8 @@ const CanvasEditor = () => {
 
                     {isProcessing && (
                         <div className="absolute inset-0 bg-white/80 backdrop-blur-sm z-[100] flex flex-col items-center justify-center">
-                            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600 mb-4" />
-                            <p className="text-blue-600 font-bold text-2xl animate-pulse text-center">
+                            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-brand-600 mb-4" />
+                            <p className="text-brand-600 font-bold text-2xl animate-pulse text-center">
                                 OPTIMIZING FOR INSTAGRAM...
                             </p>
                         </div>
@@ -354,7 +354,7 @@ const CanvasEditor = () => {
 
                 <div
                     onMouseDown={handleResizeStart}
-                    className="absolute bottom-0 right-0 w-12 h-12 bg-blue-600 cursor-nwse-resize flex items-center justify-center rounded-tl-2xl shadow-lg z-50 hover:bg-blue-700 transition-colors"
+                    className="absolute bottom-0 right-0 w-12 h-12 bg-brand-600 cursor-nwse-resize flex items-center justify-center rounded-tl-2xl shadow-lg z-50 hover:bg-brand-700 transition-colors"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />

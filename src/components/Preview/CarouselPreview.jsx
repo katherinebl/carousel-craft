@@ -88,7 +88,7 @@ const CarouselPreview = () => {
                 {/* Navigation Arrows — overlaid inside the image */}
                 <button
                     onClick={prevSlide}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md text-slate-500 hover:text-blue-600 hover:scale-110 transition-all"
+                    className="absolute left-2 top-1/2 -translate-y-1/2 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md text-slate-500 hover:text-brand-600 hover:scale-110 transition-all"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -96,7 +96,7 @@ const CarouselPreview = () => {
                 </button>
                 <button
                     onClick={nextSlide}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md text-slate-500 hover:text-blue-600 hover:scale-110 transition-all"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2 bg-white/80 backdrop-blur-sm rounded-full shadow-md text-slate-500 hover:text-brand-600 hover:scale-110 transition-all"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -109,7 +109,7 @@ const CarouselPreview = () => {
                     <button
                         key={i}
                         onClick={() => setCurrentSlide(i)}
-                        className={`h-2 transition-all rounded-full ${i === currentSlide ? 'w-6 bg-blue-600' : 'w-2 bg-slate-300 hover:bg-slate-400'}`}
+                        className={`h-2 transition-all rounded-full ${i === currentSlide ? 'w-6 bg-brand-600' : 'w-2 bg-slate-300 hover:bg-slate-400'}`}
                     />
                 ))}
             </div>
