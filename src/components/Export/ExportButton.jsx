@@ -50,7 +50,7 @@ const ExportButton = () => {
                 const sliceCtx = sliceCanvas.getContext('2d');
                 sliceCtx.drawImage(tempCanvas, i * slideWidth, 0, slideWidth, slideHeight, 0, 0, slideWidth, slideHeight);
 
-                const blob = await new Promise(resolve => sliceCanvas.toBlob(resolve, 'image/jpeg', 0.9));
+                const blob = await new Promise(resolve => sliceCanvas.toBlob(resolve, 'image/jpeg', 0.95));
                 zip.file(`slide-${String(i + 1).padStart(2, '0')}.jpg`, blob);
             }
 
